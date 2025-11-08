@@ -12,8 +12,21 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libzip-dev \
+    libicu-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+    && docker-php-ext-install \
+        pdo_mysql \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        zip \
+        intl \
+        calendar
+
+# Fix Git “dubious ownership” warning inside Jenkins
+RUN git config --global --add safe.directory /var/www/html
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -30,4 +43,5 @@ RUN composer install --no-interaction --optimize-autoloader
 # Expose port 9000 and start PHP-FPM
 EXPOSE 9000
 CMD ["php-fpm"]
+
 
