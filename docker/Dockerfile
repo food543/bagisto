@@ -1,31 +1,33 @@
-# Stage 1: Base image
-FROM php:8.1-apache
+# Stage 1: Build stage
+FROM php:8.2-fpm
 
-# Install required extensions
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
-    git zip unzip libpng-dev libjpeg-dev libfreetype6-dev \
+    git \
+    unzip \
+    zip \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql
-
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
-
-# Set working directory
-WORKDIR /var/www/html
-
-# Copy application code
-COPY . /var/www/html
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Install dependencies
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy project files
+COPY . .
+
+# Install PHP dependencies
 RUN composer install --no-interaction --optimize-autoloader
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html
+# Expose port 9000 and start PHP-FPM
+EXPOSE 9000
+CMD ["php-fpm"]
 
-EXPOSE 80
-
-CMD ["apache2-foreground"]
